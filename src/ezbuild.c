@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "quickjs.h"
 
 int main(int argc, const char** argv)
 {
