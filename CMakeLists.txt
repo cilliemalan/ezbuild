@@ -13,8 +13,10 @@ add_library(quickjs
     src/quickjs/cutils.c
     src/quickjs/libbf.c)
 target_compile_definitions(quickjs PRIVATE _CRT_SECURE_NO_WARNINGS)
+target_compile_definitions(quickjs PUBLIC CONFIG_BIGNUM)
 target_include_directories(quickjs PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/quickjs)
 
 add_executable(ezbuild
+    src/builtins.c
     src/ezbuild.c)
 target_link_libraries(ezbuild PRIVATE quickjs)
