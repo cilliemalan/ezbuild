@@ -120,7 +120,6 @@ file as build output.
 > [!NOTE] ezbuild does not currently support dynamic libraries.
 A target is comprised of a collection of source files.
 
-
 ## Functional Build
 The whole build can be thought of as a function:
 ```
