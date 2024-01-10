@@ -1,5 +1,117 @@
-# ezbuild
+# Ezbuild
 A very simple build system that utilizes ninja.
+
+## Example Build
+Imagine a repository. It has a `src` directory with some source files
+in it. In the root of the repo is an `ezbuild.proj` file.
+```js
+
+const files = [
+    "src/main.c",
+    "src/some.c",
+    "src/more.c",
+    "src/files.c"
+]
+
+addExecutable("myapp", files)
+```
+
+Now imagine we have some modules we want to group together
+for some reason.
+
+```js
+const protos = addModule("protos", [
+    "src/protos/a.c",
+    "src/protos/b.c",
+    "src/protos/c.c"
+])
+protos.publicIncludeDir("src/protos")
+protos.privateCompileDefinitions("PROTO_DEF")
+protos.privateCompileOptions("-Os")
+
+const maths = addModule("maths", [
+    "src/maths/my.c",
+    "src/maths/maths.c"
+])
+maths.publicIncludeDir("src/maths")
+
+const myapp = addExecutable("myapp", [
+    "src/main.c",
+    "src/some.c",
+    "src/more.c",
+    "src/files.c"
+])
+
+myapp.link(protos)
+myapp.link(maths)
+
+```
+
+Things can be chained together.
+
+```js
+const protos = addModule("protos", [
+        "src/protos/a.c",
+        "src/protos/b.c",
+        "src/protos/c.c"
+    ])
+    .publicIncludeDir("src/protos")
+    .privateCompileDefinitions("PROTO_DEF")
+    .privateCompileOptions("-Os")
+```
+
+Dependencies can be referenced by object or by name.
+
+```js
+myapp.link("protos")
+myapp.link("maths")
+```
+
+You can also have multiple files. If the repo root has an `ezbuild.proj`
+file, any `.ezbuild` file found in a subdirectory will also be processed.
+
+### Globbing
+Globbing (using something like `"src/*.c"`) is generally frowned upon for
+build systems. Ezbuild does not support wildcards in arguments, but does support
+an alternative that can accomplish the same thing.
+
+```js
+// register a module for each subdirectory inside
+// the "lib" directory.
+const modules = directory("lib").subDirectories()
+    .map(dir => addModule(dir.name, dir.filesWithExtension("c")
+                    .publicIncludeDir(dir.name)
+                    .privateCompileDefinition(`MODULE_${dir.name.toUpperCase())))
+
+// add an executable using each file inside the src directory
+// include all subdirectories.
+const app = addExecutable(
+    "myapp",
+    directory("src").filesWithExtensionRecursive("c"))
+
+// link the executable with all modules.
+app.link(...modules)
+```
+
+### Multiple configurations
+If you read the description of the concept below you'll see that there
+can be multiple layers of configuration. These are the target environment,
+build configuration, and debug level. There can also be different toolchains
+which have a specific compiler and linker. The target environments and
+build configurations must be set in the `ezbuild.proj` file before any
+other commands are called.
+```js
+setTargetEnvironments("linux", "mac", "windows")
+setBuildConfigurations("full", "demo")
+```
+> [!IMPORTANT]
+> These must appear before any other commands.
+
+When multiple configurations are in play, all the configuration files
+will be processed multiple times, one for each applicable configuration.
+The current target environment, build configuration, or debug level
+may be discovered by checking the `targetEnvironment`, `buildConfiguration`,
+and `debugLevel` globals.
 
 # Concept
 Whenever ezbuild is executed, it will build the _project_ found in
@@ -80,6 +192,8 @@ for multiple revisions of hardware, or building the same project in multiple off
 Sitting on the side of the target environment and build configuration is the *debug level*.
 There would typically be only two different options (debug and release) and each would simply add
 a few compile options or precompiler defs.
+> [!NOTE]
+> The default debug levels available are set by the toolchain.
 
 ### Layers
 The three layers each comprise a dimension in the *build matrix*. They also each have a default
