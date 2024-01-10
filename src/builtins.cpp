@@ -219,16 +219,17 @@ tu_int __udivmodti4(tu_int a, tu_int b, tu_int *rem)
     return q.all;
 }
 
-tu_int __udivti3(tu_int a, tu_int b)
+extern "C" tu_int __udivti3(tu_int a, tu_int b)
 {
-    return 0;
+    return __udivmodti4(a, b, nullptr);
     // return a / b;
 }
 
-tu_int __umodti3(tu_int a, tu_int b)
+extern "C" tu_int __umodti3(tu_int a, tu_int b)
 {
-    return 0;
-    // return a % b;
+    tu_int rem;
+    __udivmodti4(a, b, &rem);
+    return rem;
 }
 
 #endif
