@@ -6,6 +6,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 add_compile_options(-Wno-microsoft-enum-forward-reference)
 endif()
 
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_C_STANDARD 23)
+
 add_library(quickjs
     src/quickjs/quickjs.c
     src/quickjs/libregexp.c
