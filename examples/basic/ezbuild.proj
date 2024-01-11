@@ -1,0 +1,17 @@
+
+const conversion = addModule("conversion", [
+    "lib/conversion/putting.c",
+    "lib/conversion/parsing.c",
+]).publicIncludeDir("lib/conversion")
+
+const numbers = addModule("numbers", [
+    "lib/conversion/checking.c",
+    "lib/conversion/generating.c",
+    "lib/conversion/printing.c",
+]).publicIncludeDir("lib/numbers")
+
+addExecutable("basic", [
+    "src/main.c",
+    "src/io.c"
+]).link(conversion)
+    .link(numbers)
