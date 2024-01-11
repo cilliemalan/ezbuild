@@ -1,5 +1,57 @@
 #include "javascript.h"
 
+static void js_write_internal(
+    JSContext *ctx,
+    JSValueConst *argv,
+    int argc,
+    FILE *dest,
+    bool newline)
+{
+    int i;
+    const char *str;
+    size_t len;
+
+    for (i = 0; i < argc; i++)
+    {
+        if (i != 0)
+        {
+            fputc(' ', dest);
+        }
+
+        str = JS_ToCStringLen(ctx, &len, argv[i]);
+        if (!str)
+        {
+            continue;
+        }
+
+        fwrite(str, 1, len, dest);
+        JS_FreeCString(ctx, str);
+    }
+
+    if (newline)
+    {
+        fputc('\n', dest);
+    }
+}
+
+JSValue js_writeln(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) noexcept
+{
+    js_write_internal(ctx, argv, argc, stdout, true);
+    return JS_UNDEFINED;
+}
+
+JSValue js_write(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) noexcept
+{
+    js_write_internal(ctx, argv, argc, stdout, false);
+    return JS_UNDEFINED;
+}
+
+JSValue js_error(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) noexcept
+{
+    js_write_internal(ctx, argv, argc, stderr, true);
+    return JS_UNDEFINED;
+}
+
 JavascriptContext::JavascriptContext()
     : rt(JS_NewRuntime()),
       ctx(rt ? JS_NewContext(rt) : nullptr)
@@ -8,6 +60,26 @@ JavascriptContext::JavascriptContext()
     {
         throw new std::runtime_error("Could not create javascript runtime");
     }
+
+    initialize_runtime();
+    initialize_context();
+}
+
+void JavascriptContext::initialize_runtime() noexcept
+{
+}
+
+void JavascriptContext::initialize_context() noexcept
+{
+    auto global = JS_GetGlobalObject(ctx);
+    auto console = JS_NewObject(ctx);
+    JS_SetPropertyStr(ctx, console, "log", JS_NewCFunction(ctx, js_writeln, "log", 1));
+    JS_SetPropertyStr(ctx, console, "error", JS_NewCFunction(ctx, js_error, "error", 1));
+    JS_SetPropertyStr(ctx, global, "console", console);
+    JS_SetPropertyStr(ctx, global, "print", JS_NewCFunction(ctx, js_writeln, "print", 1));
+    JS_SetPropertyStr(ctx, global, "write", JS_NewCFunction(ctx, js_write, "print", 1));
+    JS_SetPropertyStr(ctx, global, "writeln", JS_NewCFunction(ctx, js_writeln, "print", 1));
+    JS_FreeValue(ctx, global);
 }
 
 static std::string get_exception_message(JSContext *ctx, JSValue x) noexcept
