@@ -2,29 +2,10 @@
 #include <stdio.h>
 #include "common.h"
 #include "fs.h"
-#include "variables.h"
-
-JSRuntime *runtime = nullptr;
-JSContext *context = nullptr;
-
-static void initialize_runtime()
-{
-    runtime = JS_NewRuntime();
-    if (!runtime)
-    {
-        throw std::runtime_error("Could not create JS runtime");
-    }
-
-    context = JS_NewContext(runtime);
-    if (!context)
-    {
-        throw std::runtime_error("Could not create JS context");
-    }
-}
+#include "javascript.h"
 
 static void load_configuration()
 {
-
 }
 
 static void load_project()
@@ -37,7 +18,6 @@ static void load_project()
 
 static void load_subdirectories()
 {
-
 }
 
 static void process_builds()
@@ -49,8 +29,9 @@ int main(int argc, const char **argv)
 {
     try
     {
-        initialize_runtime();
-        initialize_variables();
+        JavascriptContext ctx;
+        Variables vars(ctx);
+
         load_configuration();
         load_project();
         load_subdirectories();

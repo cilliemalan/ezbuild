@@ -24,5 +24,5 @@ add_executable(ezbuild
     src/common.cpp
     src/ezbuild.cpp
     src/fs.cpp
-    src/variables.cpp)
+    src/javascript.cpp)
 target_link_libraries(ezbuild PRIVATE quickjs)
