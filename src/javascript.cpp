@@ -12,10 +12,10 @@ JavascriptContext::JavascriptContext()
 
 static std::string get_exception_message(JSContext *ctx, JSValue x) noexcept
 {
-    const char *result = "Unkown Error";
+    std::string result = "Unkown Error";
     if (JS_IsString(x))
     {
-        result = JS_ToCString(ctx, x);
+        result = JS_ToStdString(ctx, x);
     }
     else if (JS_IsError(ctx, x))
     {
@@ -23,7 +23,7 @@ static std::string get_exception_message(JSContext *ctx, JSValue x) noexcept
         JS_ClearException(ctx);
         if (JS_IsString(v))
         {
-            result = JS_ToCString(ctx, x);
+            result = JS_ToStdString(ctx, v);
         }
         JS_FreeValue(ctx, v);
     }
@@ -33,14 +33,14 @@ static std::string get_exception_message(JSContext *ctx, JSValue x) noexcept
 
 static std::string get_exception_stack(JSContext *ctx, JSValue x) noexcept
 {
-    const char *result = "";
+    std::string result = "";
     if (JS_IsError(ctx, x))
     {
         JSValue v = JS_GetPropertyStr(ctx, x, "stack");
         JS_ClearException(ctx);
         if (JS_IsString(v))
         {
-            result = JS_ToCString(ctx, x);
+            result = JS_ToStdString(ctx, v);
         }
         JS_FreeValue(ctx, v);
     }
@@ -52,6 +52,7 @@ JavascriptException::JavascriptException(JSContext *ctx, JSValue x)
     : std::runtime_error(get_exception_message(ctx, x)),
       _stack(get_exception_stack(ctx, x))
 {
+    JS_FreeValue(ctx, x);
 }
 
 JavascriptContext::~JavascriptContext() noexcept
