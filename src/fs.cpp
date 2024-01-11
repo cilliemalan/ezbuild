@@ -10,7 +10,7 @@ std::vector<char> fs_read_entire_file(std::filesystem::path path)
     std::vector<char> buffer(size);
     if (!fr.read(buffer.data(), size))
     {
-        throw new std::runtime_error("could not read the file");
+        throw std::runtime_error("could not read the file");
     }
     return buffer;
 }
