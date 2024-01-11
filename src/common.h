@@ -1,3 +1,4 @@
+#pragma once
 
 #include "quickjs.h"
 
@@ -16,10 +17,10 @@ constexpr std::array default_ignores{
     "node_modules",
 };
 
-struct not_implemented : std::runtime_error
+struct not_implemented : public std::runtime_error
 {
-    explicit not_implemented(const std::string& m) : std::runtime_error(m.c_str()) {}
-    explicit not_implemented(const char* m) : std::runtime_error(m) {}
+    explicit not_implemented(const std::string &m) : std::runtime_error(m.c_str()) {}
+    explicit not_implemented(const char *m) : std::runtime_error(m) {}
     explicit not_implemented() : std::runtime_error("Not Implemented") {}
 };
 
