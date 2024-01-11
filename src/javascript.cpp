@@ -175,15 +175,47 @@ void Variables::initialize_defaults()
     set(debugLevels, JS_NewArray(ctx));
 }
 
+std::string JS_ToStdString(JSContext *ctx, JSValue str)
+{
+    if (JS_IsString(str))
+    {
+        const char *cstr = JS_ToCString(ctx, str);
+        std::string r{cstr};
+        JS_FreeCString(ctx, cstr);
+        return r;
+    }
+    return {};
+}
+
+JSValue JS_EvalAuto(JSContext *ctx, const std::string_view script, const std::string_view filename)
+{
+    const char *fn = filename.data() ? filename.data() : "";
+    JSValue v = JS_Eval(ctx, script.data(), script.size(), fn, JS_EVAL_FLAG_STRICT);
+    if (JS_IsException(v))
+    {
+        JS_ThrowPendingException(ctx);
+    }
+    return v;
+}
+
 void JS_ClearException(JSContext *ctx)
 {
     JSValue v = JS_GetException(ctx);
     JS_FreeValue(ctx, v);
 }
 
-void JS_ThrowException(JSContext *ctx)
+void JS_ThrowException(JSContext *ctx, JSValue exception)
+{
+    throw JavascriptException(ctx, exception);
+}
+
+void JS_ThrowPendingException(JSContext *ctx)
 {
     JSValue v = JS_GetException(ctx);
+    if (JS_IsError(ctx, v))
+    {
+        JS_ThrowException(ctx, v);
+    }
     JS_FreeValue(ctx, v);
 }
 
