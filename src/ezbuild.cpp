@@ -4,11 +4,12 @@
 #include "fs.h"
 #include "javascript.h"
 
-static void load_configuration()
+static void load_configuration(JSContext *ctx)
 {
+    JS_EvalAuto(ctx, "print('Hello World')");
 }
 
-static void load_project()
+static void load_project(JSContext *ctx)
 {
     if (!std::filesystem::exists(default_ezbuild_proj_file))
     {
@@ -16,7 +17,7 @@ static void load_project()
     }
 }
 
-static void load_subdirectories()
+static void load_subdirectories(JSContext *ctx)
 {
 }
 
@@ -32,9 +33,9 @@ int main(int argc, const char **argv)
         JavascriptContext ctx;
         Variables vars(ctx);
 
-        load_configuration();
-        load_project();
-        load_subdirectories();
+        load_configuration(ctx);
+        load_project(ctx);
+        load_subdirectories(ctx);
         process_builds();
     }
     catch (const std::exception &ex)
