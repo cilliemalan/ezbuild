@@ -21,6 +21,8 @@ target_include_directories(quickjs PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/quickj
 
 add_executable(ezbuild
     src/builtins.cpp
+    src/common.cpp
     src/ezbuild.cpp
-    src/fs.cpp)
+    src/fs.cpp
+    src/variables.cpp)
 target_link_libraries(ezbuild PRIVATE quickjs)
