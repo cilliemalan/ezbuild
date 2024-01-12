@@ -4,20 +4,34 @@
 #include "fs.h"
 #include "javascript.h"
 
-static void load_configuration(JSContext *ctx)
+struct EzBuildContext
 {
-    JS_EvalAuto(ctx, "print('Hello World')");
+    EzBuildContext() noexcept
+        : ctx{},
+          variables{ctx}
+    {
+    }
+
+    JavascriptContext ctx;
+    Variables variables;
+} ezbuild;
+
+static void load_configuration()
+{
+    auto config_path = fs_get_home_dir() / config_file_name;
+    JS_EvalFileIfExists(ezbuild.ctx, config_path);
 }
 
-static void load_project(JSContext *ctx)
+static void load_project()
 {
-    if (!std::filesystem::exists(default_ezbuild_proj_file))
+    auto projfile = fs_get_cwd() / ezbuild_project_file_name;
+    if (!std::filesystem::exists(projfile))
     {
-        throw std::runtime_error(std::string{"The current directory does not contain an "} + default_ezbuild_proj_file + " file");
+        throw std::runtime_error(std::string{"The current directory does not contain an "} + ezbuild_project_file_name + " file");
     }
 }
 
-static void load_subdirectories(JSContext *ctx)
+static void load_subdirectories()
 {
 }
 
@@ -30,12 +44,9 @@ int main(int argc, const char **argv)
 {
     try
     {
-        JavascriptContext ctx;
-        Variables vars(ctx);
-
-        load_configuration(ctx);
-        load_project(ctx);
-        load_subdirectories(ctx);
+        load_configuration();
+        load_project();
+        load_subdirectories();
         process_builds();
     }
     catch (const std::exception &ex)

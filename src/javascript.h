@@ -5,7 +5,7 @@
 class JavascriptContext
 {
 public:
-    JavascriptContext();
+    JavascriptContext() noexcept;
     ~JavascriptContext() noexcept;
 
     JSRuntime *runtime() { return rt; }
@@ -28,8 +28,8 @@ private:
 class JavascriptException : public std::runtime_error
 {
 public:
-    JavascriptException(JSContext *ctx, JSValue x);
-    ~JavascriptException() {}
+    JavascriptException(JSContext *ctx, JSValue x) noexcept;
+    ~JavascriptException() noexcept {}
 
     JSContext *ctx() const { return _ctx; }
     std::string stack() const { return _stack; }
@@ -43,8 +43,6 @@ private:
 class Variables
 {
 public:
-    static constexpr char ezbuildProjectFileName[] = "ezbuildProjectFileName";
-    static constexpr char ezbuildFileName[] = "ezbuildFileName";
     static constexpr char ignoredDirectories[] = "ignoredDirectories";
     static constexpr char targetEnvironments[] = "targetEnvironments";
     static constexpr char buildConfigurations[] = "buildConfigurations";
@@ -55,6 +53,9 @@ public:
     ~Variables() noexcept {}
 
     JSValue get(const std::string_view variable) noexcept;
+    std::string get_string(const std::string_view variable);
+    std::u8string get_u8string(const std::string_view variable);
+    std::filesystem::path get_path(const std::string_view variable);
     void set(const std::string_view variable, JSValue value) noexcept;
     JSContext *context() { return ctx; }
 

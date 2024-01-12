@@ -11,10 +11,20 @@
 extern JSRuntime *runtime;
 extern JSContext *context;
 
-constexpr char default_ezbuild_proj_file[] = "ezbuild.proj";
-constexpr char default_ezbuild_file[] = ".ezbuild";
+constexpr char config_file_name[] = "ezbuild.config";
+constexpr char ezbuild_project_file_name[] = "ezbuild.proj";
+constexpr char ezbuild_file_name[] = ".ezbuild";
 constexpr std::array default_ignores{
     "node_modules",
+    "out",
+    "dist",
+    "build",
+    "debug",
+    "release",
+    "Debug",
+    "Release",
+    "x86",
+    "x64",
 };
 
 struct not_implemented : public std::runtime_error

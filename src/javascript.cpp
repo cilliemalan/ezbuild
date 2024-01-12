@@ -53,13 +53,14 @@ JSValue js_error(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *
     return JS_UNDEFINED;
 }
 
-JavascriptContext::JavascriptContext()
+JavascriptContext::JavascriptContext() noexcept
     : rt(JS_NewRuntime()),
       ctx(rt ? JS_NewContext(rt) : nullptr)
 {
     if (!rt || !ctx)
     {
-        throw new std::runtime_error("Could not create javascript runtime");
+        print_error("Could not create javascript runtime");
+        std::terminate();
     }
 
     initialize_runtime();
@@ -145,7 +146,7 @@ static std::string append_stack(const std::string &msg, const std::string &stack
     return result;
 }
 
-JavascriptException::JavascriptException(JSContext *ctx, JSValue x)
+JavascriptException::JavascriptException(JSContext *ctx, JSValue x) noexcept
     : _message(get_exception_message(ctx, x)),
       _stack(get_exception_stack(ctx, x)),
       std::runtime_error(append_stack(_message, _stack))
@@ -179,7 +180,40 @@ JSValue Variables::get(const std::string_view variable) noexcept
     auto result = JS_GetProperty(ctx, global, prop);
     JS_FreeAtom(ctx, prop);
     JS_FreeValue(ctx, global);
+
+    if (JS_IsException(result))
+    {
+        JS_ClearException(ctx);
+        result = JS_UNDEFINED;
+    }
+
     return result;
+}
+
+std::string Variables::get_string(const std::string_view variable)
+{
+    std::string result;
+    auto jsv = get(variable);
+    if (JS_IsString(jsv))
+    {
+        const char *us = JS_ToCString(ctx, jsv);
+        result = us;
+        JS_FreeCString(ctx, us);
+    }
+    JS_FreeValue(ctx, jsv);
+    return result;
+}
+
+std::u8string Variables::get_u8string(const std::string_view variable)
+{
+    std::string sss = get_string(variable);
+    std::u8string u8s{reinterpret_cast<char8_t *>(sss.data()), sss.size()};
+    return u8s;
+}
+
+std::filesystem::path Variables::get_path(const std::string_view variable)
+{
+    return get_u8string(variable);
 }
 
 void Variables::set(const std::string_view variable, JSValue value) noexcept
@@ -193,8 +227,6 @@ void Variables::set(const std::string_view variable, JSValue value) noexcept
 
 void Variables::initialize_defaults()
 {
-    set(ezbuildProjectFileName, JS_NewStringLen(ctx, default_ezbuild_proj_file, sizeof(default_ezbuild_proj_file) - 1));
-    set(ezbuildFileName, JS_NewStringLen(ctx, default_ezbuild_file, sizeof(default_ezbuild_file) - 1));
     set(ignoredDirectories, JS_NewArray(ctx));
     set(targetEnvironments, JS_NewArray(ctx));
     set(buildConfigurations, JS_NewArray(ctx));
