@@ -1,4 +1,5 @@
 #include "javascript.h"
+#include "fs.h"
 
 static void js_write_internal(
     JSContext *ctx,
@@ -105,7 +106,7 @@ static std::string get_exception_message(JSContext *ctx, JSValue x) noexcept
 
 static std::string get_exception_stack(JSContext *ctx, JSValue x) noexcept
 {
-    std::string result = "";
+    std::string result;
     if (JS_IsError(ctx, x))
     {
         JSValue v = JS_GetPropertyStr(ctx, x, "stack");
@@ -120,9 +121,34 @@ static std::string get_exception_stack(JSContext *ctx, JSValue x) noexcept
     return result;
 }
 
+static std::string append_stack(const std::string &msg, const std::string &stack)
+{
+    if (stack.empty())
+    {
+        return msg;
+    }
+
+    std::string result{std::move(msg)};
+    result.reserve(msg.size() + stack.size() + 64);
+    result += "\n";
+
+    size_t offset = 0;
+    do
+    {
+        auto nn = stack.find_first_of('\n', offset);
+        size_t end = nn == std::string::npos ? stack.size() : nn;
+        result += "\t";
+        result += stack.substr(offset, end - offset);
+        offset = end + 1;
+    } while (offset < stack.size());
+
+    return result;
+}
+
 JavascriptException::JavascriptException(JSContext *ctx, JSValue x)
-    : std::runtime_error(get_exception_message(ctx, x)),
-      _stack(get_exception_stack(ctx, x))
+    : _message(get_exception_message(ctx, x)),
+      _stack(get_exception_stack(ctx, x)),
+      std::runtime_error(append_stack(_message, _stack))
 {
     JS_FreeValue(ctx, x);
 }
@@ -187,15 +213,29 @@ std::string JS_ToStdString(JSContext *ctx, JSValue str)
     return {};
 }
 
-JSValue JS_EvalAuto(JSContext *ctx, const std::string_view script, const std::string_view filename)
+JSValue JS_EvalAuto(JSContext *ctx, const std::string_view script, const std::filesystem::path filename)
 {
-    const char *fn = filename.data() ? filename.data() : "";
-    JSValue v = JS_Eval(ctx, script.data(), script.size(), fn, JS_EVAL_FLAG_STRICT);
-    if (JS_IsException(v))
-    {
-        JS_ThrowPendingException(ctx);
-    }
+    auto s = filename.string();
+    const char *fn = s.c_str();
+    JSValue v = JS_WrapThrow(ctx, JS_Eval(ctx, script.data(), script.size(), fn, JS_EVAL_FLAG_STRICT));
     return v;
+}
+
+JSValue JS_EvalFile(JSContext *ctx, const std::filesystem::path filename)
+{
+    auto contents = fs_read_entire_file(filename);
+    std::string_view script{contents.data(), contents.size()};
+    return JS_EvalAuto(ctx, script, filename);
+}
+
+JSValue JS_EvalFileIfExists(JSContext *ctx, const std::filesystem::path filename)
+{
+    if (std::filesystem::exists(filename))
+    {
+        return JS_EvalFile(ctx, filename);
+    }
+
+    return JS_UNDEFINED;
 }
 
 void JS_ClearException(JSContext *ctx)

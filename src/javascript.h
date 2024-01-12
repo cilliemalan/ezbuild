@@ -36,6 +36,7 @@ public:
 
 private:
     JSContext *_ctx;
+    std::string _message;
     std::string _stack;
 };
 
@@ -64,10 +65,22 @@ private:
 };
 
 std::string JS_ToStdString(JSContext *ctx, JSValue str);
-JSValue JS_EvalAuto(JSContext *ctx, const std::string_view script, const std::string_view filename = {});
+JSValue JS_EvalAuto(JSContext *ctx, const std::string_view script, const std::filesystem::path filename = {});
+JSValue JS_EvalFile(JSContext *ctx, const std::filesystem::path filename);
+JSValue JS_EvalFileIfExists(JSContext *ctx, const std::filesystem::path filename);
 void JS_ClearException(JSContext *ctx);
 void JS_ThrowException(JSContext *ctx, JSValue exception);
 void JS_ThrowPendingException(JSContext *ctx);
 int JS_ArrayPush(JSContext *ctx, JSValue array, JSValue pushme);
 int JS_ArrayPush(JSContext *ctx, JSValue array, JSValue *items, size_t nitems);
 JSValue JS_ArrayCreate(JSContext *ctx, JSValue *items, size_t nitems);
+
+inline JSValue JS_WrapThrow(JSContext *ctx, JSValue v)
+{
+    if (JS_IsException(v))
+    {
+        JS_ThrowException(ctx, v);
+    }
+
+    return v;
+}
