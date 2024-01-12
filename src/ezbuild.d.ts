@@ -43,23 +43,42 @@ interface File extends FileSystemObject {
 }
 
 interface Directory extends FileSystemObject {
-    subDirectory: (name: string) => Directory;
-    subDirectories: () => Directory[];
-    subDirectoriesRecursive: () => Directory[];
-    files: () => File[];
-    filesRecursive: () => File[];
-    filesWithExtension: (...extensions: string[]) => File[];
-    filesWithExtensionRecursive: (...extensions: string[]) => File[];
+    subDirectory(name: string): Directory;
+    subDirectories(): Directory[];
+    subDirectoriesRecursive(): Directory[];
+    files(): File[];
+    filesRecursive(): File[];
+    filesWithExtension(...extensions: string[]): File[];
+    filesWithExtensionRecursive(...extensions: string[]): File[];
+}
+
+interface ToolOutput {
+    arguments: Record<string, string | string[]>;
+    output: string | string[];
+    input: string | string[];
 }
 
 interface Tool {
+    name: string;
+    description: string;
     family: "gcc" | "clang" | "msvc" | "other";
     type: "compiler" | "linker";
     inputExtensions: string[];
     outputExtension: string;
+    command: string;
+    depfile: string;
+    restat: string;
+
+    process(input: string | string[], target: Target): ToolOutput;
 }
 
 interface Toolchain {
     name: string;
     tools: Tool[];
 }
+
+declare var toolchains: Toolchain[];
+declare var toolchain: Toolchain;
+
+declare function setToolchain(toolchain: Toolchain | string);
+declare function addToolchain(toolchain: Toolchain);
