@@ -12,42 +12,43 @@ struct EzBuildContext
     {
     }
 
+    void load_configuration()
+    {
+        auto config_path = fs_get_home_dir() / config_file_name;
+        JS_EvalFileIfExists(ctx, config_path);
+    }
+
+    void load_project()
+    {
+        auto projfile = fs_get_cwd() / ezbuild_project_file_name;
+        if (!std::filesystem::exists(projfile))
+        {
+            throw std::runtime_error(std::string{"The current directory does not contain an "} + ezbuild_project_file_name + " file");
+        }
+    }
+
+    void load_subdirectories()
+    {
+    }
+
+    void process_builds()
+    {
+        throw not_implemented();
+    }
+
     JavascriptContext ctx;
     Variables variables;
-} ezbuild;
-
-static void load_configuration()
-{
-    auto config_path = fs_get_home_dir() / config_file_name;
-    JS_EvalFileIfExists(ezbuild.ctx, config_path);
-}
-
-static void load_project()
-{
-    auto projfile = fs_get_cwd() / ezbuild_project_file_name;
-    if (!std::filesystem::exists(projfile))
-    {
-        throw std::runtime_error(std::string{"The current directory does not contain an "} + ezbuild_project_file_name + " file");
-    }
-}
-
-static void load_subdirectories()
-{
-}
-
-static void process_builds()
-{
-    throw not_implemented();
-}
+};
 
 int main(int argc, const char **argv)
 {
     try
     {
-        load_configuration();
-        load_project();
-        load_subdirectories();
-        process_builds();
+        EzBuildContext ezbuild;
+        ezbuild.load_configuration();
+        ezbuild.load_project();
+        ezbuild.load_subdirectories();
+        ezbuild.process_builds();
     }
     catch (const std::exception &ex)
     {
