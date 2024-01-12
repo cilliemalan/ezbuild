@@ -4,9 +4,9 @@
 #include "fs.h"
 #include "javascript.h"
 
-struct EzBuildContext
+struct Ezbuild
 {
-    EzBuildContext() noexcept
+    Ezbuild() noexcept
         : ctx{},
           variables{ctx}
     {
@@ -44,7 +44,7 @@ int main(int argc, const char **argv)
 {
     try
     {
-        EzBuildContext ezbuild;
+        Ezbuild ezbuild;
         ezbuild.load_configuration();
         ezbuild.load_project();
         ezbuild.load_subdirectories();
